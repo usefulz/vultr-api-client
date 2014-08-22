@@ -537,7 +537,7 @@ class Vultr
     if ($this->debug) echo $this->request_type . ' ' . $url . PHP_EOL;
 
     $_defaults = array(
-//    CURLOPT_USERAGENT => sprintf('%s v%s (%s)', $this->agent, $this->version, 'https://github.com/usefulz/vultr-api-client'),
+      CURLOPT_USERAGENT => sprintf('%s v%s (%s)', $this->agent, $this->version, 'https://github.com/usefulz/vultr-api-client'),
       CURLOPT_HEADER => 0,
       CURLOPT_VERBOSE => 0,
       CURLOPT_SSL_VERIFYPEER => 1,
