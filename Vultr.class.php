@@ -558,7 +558,7 @@ class Vultr
   }
 
   /**
-   * SSH Keys Create method
+   * SSH Keys Update method
    * @see https://www.vultr.com/api/#sshkey_sshkey_update
    * @param string $key_id
    * @param string $name
