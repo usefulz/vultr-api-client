@@ -694,7 +694,7 @@ class Vultr
     catch(Exception $e)
     {
       curl_close($apisess);
-      die($e->getMessage() . PHP_EOL);
+      return $e->getMessage() . PHP_EOL;
     }
 
 
