@@ -181,12 +181,13 @@ class Vultr
    * Destroy snapshot
    * @see https://www.vultr.com/api/#snapshot_destroy
    * @param int $snapshot_id
+   * @return int HTTP response code
    */
 
   public function snapshot_destroy($snapshot_id)
   {
     $args = array('SNAPSHOTID' => $snapshot_id);
-    return self::post('snapshot/destroy', $args);
+    return self::code('snapshot/destroy', $args);
   }
 
   /**
@@ -199,6 +200,17 @@ class Vultr
   {
     $args = array('SUBID' => $server_id);
     return self::post('snapshot/create', $args);
+  }
+
+  /**
+   * List available ISO iamges
+   * @see https://www.vultr.com/api/#iso_list
+   * @return mixed Available ISO images
+   **/
+
+  public function iso_list()
+  {
+    return self::get('iso/list');
   }
 
   /**
@@ -247,17 +259,34 @@ class Vultr
   }
 
   /**
+   * Update startup script
+   * @param int $script_id
+   * @param string $name
+   * @param string $script script contents
+   * @return int HTTP response code
+   **/
+
+   public function startupscript_update($script_id, $name, $script)
+   {
+     $args = array(
+       'SCRIPTID' => $script_id,
+       'name' => $name,
+       'script' => $script
+     );
+     return self::code('startupscript/update', $args);
+   }
+
+  /**
    * Destroy startup script
-   * @todo Not sure if this action has a response
    * @see https://www.vultr.com/api/#startupscript_destroy
    * @param int $script_id
-   * @return mixed
+   * @return int HTTP respnose code
    */
 
   public function startupscript_destroy($script_id)
   {
     $args = array('SCRIPTID' => $script_id);
-    return self::post('startupscript/destroy', $args);
+    return self::code('startupscript/destroy', $args);
   }
 
   /**
@@ -315,11 +344,13 @@ class Vultr
    * @return mixed Bandwidth history
    */
 
-  public function server_bandwidth($server_id)
+  public function bandwidth($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
     return self::get('server/bandwidth', $args);
   }
+
+
 
   /**
    * List IPv4 Addresses allocated to specified server
@@ -328,7 +359,7 @@ class Vultr
    * @return mixed IPv4 address list
    */
 
-  public function server_list_ipv4($server_id)
+  public function list_ipv4($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
     $ipv4 = self::get('server/list_ipv4', $args);
@@ -336,20 +367,54 @@ class Vultr
   }
 
   /**
+   * Create IPv4 address
+   * @see https://www.vultr.com/api/#server_create_ipv4
+   * @param int $server_id
+   * @param string Reboot server after adding IP: <yes|no>, default: yes
+   * @return int HTTP response code
+   **/
+
+  public function ipv4_create($server_id, $reboot = 'yes')
+  {
+    $args = array(
+      'SUBID' => $server_id,
+      'reboot' => ($reboot == 'yes' ? 'yes' : 'no')
+    );
+    return self::code('server/create_ipv4', $args);
+  }
+
+  /**
+   * Destroy IPv4 Address
+   * @see https://www.vultr.com/api/#server_destroy_ipv4
+   * @param int $server_ID
+   * @param string $ip IPv4 address
+   * @return int HTTP response code
+   **/
+
+  public function destroy_ipv4($server_id, $ip4)
+  {
+    $args = array(
+      'SUBID' => $server_id,
+      'ip' => $ip4
+    );
+    return self::code('server/destroy_ipv4', $args);
+  }
+
+  /**
    * Set Reverse DNS for IPv4 address
    * @see https://www.vultr.com/api/#server_reverse_set_ipv4
    * @param string $ip
    * @param string $rdns
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_reverse_set_ipv4($ip, $rdns)
+  public function reverse_set_ipv4($ip, $rdns)
   {
     $args = array(
       'ip' => $ip,
       'entry' => $rdns
     );
-    return self::post('server/reverse_set_ipv4', $args);
+    return self::code('server/reverse_set_ipv4', $args);
   }
 
   /**
@@ -357,16 +422,16 @@ class Vultr
    * @see https://www.vultr.com/api/#server_reverse_default_ipv4
    * @param string $server_id
    * @param string $ip
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_reverse_default_ipv4($server_id, $ip)
+  public function reverse_default_ipv4($server_id, $ip)
   {
     $args = array(
       'SUBID' => (int) $server_id,
       'ip' => $ip
     );
-    return self::post('server/reverse_default_ipv4', $args);
+    return self::code('server/reverse_default_ipv4', $args);
   }
 
   /**
@@ -376,7 +441,7 @@ class Vultr
    * @return mixed IPv6 allocation info
    */
 
-  public function server_list_ipv6($server_id)
+  public function list_ipv6($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
     $ipv6 = self::get('server/list_ipv6', $args);
@@ -389,82 +454,99 @@ class Vultr
    * @param int $server_id
    * @param string $ip
    * @param string $rdns
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_reverse_set_ipv6($server_id, $ip, $rdns)
+  public function reverse_set_ipv6($server_id, $ip, $rdns)
   {
     $args = array(
       'SUBID' => (int) $server_id,
       'ip' => $ip,
       'entry' => $rdns
     );
-    return self::post('server/reverse_set_ipv6', $args);
+    return self::code('server/reverse_set_ipv6', $args);
+  }
+
+  /**
+   * Delete IPv6 Reverse DNS
+   * @see https://www.vultr.com/api/#server_reverse_delete_ipv6
+   * @param int $server_id
+   * @param string $ip6 IPv6 address
+   * @return int HTTP response code
+   **/
+
+  public function reverse_delete_ipv6($server_id, $ip6)
+  {
+    $args = array(
+      'SUBID' => $server_id,
+      'ip' => $ip6
+    );
+    return self::code('server/reverse_delete_ipv6', $args);
   }
 
   /**
    * Reboot server
    * @see https://www.vultr.com/api/#server_reboot
    * @param int $server_id
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_reboot($server_id)
+  public function reboot($server_id)
   {
     $args = array('SUBID' => $server_id);
-    return self::post('server/reboot', $args);
+    return self::code('server/reboot', $args);
   }
 
   /**
    * Halt server
    * @see https://www.vultr.com/api/#server_halt
    * @param int $server_id
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_halt($server_id)
+  public function halt($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
-    return self::post('server/halt', $args);
+    return self::code('server/halt', $args);
   }
 
   /**
    * Start server
    * @see https://www.vultr.com/api/#server_start
    * @param int $server_id
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_start($server_id)
+  public function start($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
-    return self::post('server/start', $args);
+    return self::code('server/start', $args);
   }
 
   /**
    * Destroy server
    * @see https://www.vultr.com/api/#server_destroy
    * @param int $server_id
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_destroy($server_id)
+  public function destroy($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
-    return self::post('server/destroy', $args);
+    return self::code('server/destroy', $args);
   }
 
   /**
    * Reinstall OS on an instance
    * @see https://www.vultr.com/api/#server_reinstall
    * @param int $server_id
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_reinstall($server_id)
+  public function reinstall($server_id)
   {
     $args = array('SUBID' => (int) $server_id);
-    return self::post('server/reinstall', $args);
+    return self::code('server/reinstall', $args);
   }
 
   /**
@@ -472,16 +554,16 @@ class Vultr
    * @see https://www.vultr.com/api/#server_label_set
    * @param int $server_id
    * @param string $label
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_label_set($server_id, $label)
+  public function label_set($server_id, $label)
   {
     $args = array(
       'SUBID' => (int) $server_id,
       'label' => $label
     );
-    return self::post('server/label_set', $args);
+    return self::code('server/label_set', $args);
   }
 
   /**
@@ -489,16 +571,32 @@ class Vultr
    * @see https://www.vultr.com/api/#server_restore_snapshot
    * @param int $server_id
    * @param string $snapshot_id Hexadecimal string with Restore ID
-   * @return mixed
+   * @return int HTTP response code
    */
 
-  public function server_restore_snapshot($server_id, $snapshot_id)
+  public function restore_snapshot($server_id, $snapshot_id)
   {
     $args = array(
       'SUBID' => (int) $server_id,
       'SNAPSHOTID' => preg_replace('/[^a-f0-9]/', '', $snapshot_id)
     );
-    return self::post('server/restore_snapshot', $args);
+    return self::code('server/restore_snapshot', $args);
+  }
+
+  /**
+   * Restore Backup
+   * @param int $server_id
+   * @param string $backup_id
+   * @return int HTTP response code
+   **/
+
+  public function restore_backup($server_id, $backup_id)
+  {
+    $args = array(
+      'SUBID' => $server_id,
+      'BACKUPID' => $backup_id
+    );
+    return self::code('server/restore_backup', $args);
   }
 
   /**
@@ -510,7 +608,7 @@ class Vultr
    * @return int Server ID if creation is successful
    */
 
-  public function server_create($hostname, $config)
+  public function create($hostname, $config)
   {
     try
     {
@@ -563,7 +661,7 @@ class Vultr
    * @param string $key_id
    * @param string $name
    * @param string $key [openssh formatted public key]
-   * @return mixed response code and object in associative arrays
+   * @return int HTTP response code
    */
 
   public function sshkey_update($key_id, $name, $key)
@@ -580,7 +678,7 @@ class Vultr
    * SSH Keys Destroy method
    * @see https://www.vultr.com/api/#sshkey_sshkey_destroy
    * @param string $key_id
-   * @return mixed response code and object in associative arrays
+   * @return int HTTP response code
    */
 
   public function sshkey_destroy($key_id)
@@ -706,9 +804,9 @@ class Vultr
     curl_close($apisess);
     $obj = json_decode($response, true);
 
-    if ($this->response_code != 0)
+    if ($this->get_code)
     {
-      return array('code' => $this->response_code);
+      return (int) $this->response_code;
     }
 
     return $obj;
