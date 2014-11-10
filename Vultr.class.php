@@ -102,6 +102,30 @@ class Vultr
   public $oses   = array();
 
   /**
+   * SSH Keys variable
+   * @access public
+   * @type mixed Array to store SSH keys
+   **/
+
+  public $ssh_keys = array();
+
+  /**
+   * Response code variable
+   * @access public
+   * @type int Holds HTTP response code from API
+   **/
+
+  public $response_code = 0;
+
+  /**
+   * Response code variable
+   * @access public
+   * @type bool Determines whether to include the response code, default: false
+   **/
+
+  public $get_code = false;
+
+  /**
    * Constructor function
    * @param string $token
    * @see https://my.vultr.com/settings/
@@ -117,6 +141,7 @@ class Vultr
     $this->servers   = self::server_list();
     $this->plans     = self::plans_list();
     $this->oses      = self::os_list();
+    $this->ssh_keys  = self::sshkeys_list();
   }
 
   /**
@@ -499,6 +524,71 @@ class Vultr
     return (int) $create['SUBID'];
   }
 
+
+  /**
+   * SSH Keys List method
+   * @see https://www.vultr.com/api/#sshkey_sshkey_list
+   * @return FALSE if no SSH keys are available
+   * @return mixed with whatever ssh keys get returned
+   */
+
+   public function sshkeys_list()
+   {
+     $try = self::get('sshkey/list');
+     if (sizeof($try) < 1) return FALSE;
+     return $try;
+   }
+
+  /**
+   * SSH Keys Create method
+   * @see https://www.vultr.com/api/#sshkey_sshkey_create
+   * @param string $name
+   * @param string $key [openssh formatted public key]
+   * @return FALSE if no SSH keys are available
+   * @return mixed with whatever ssh keys get returned
+   */
+
+  public function sshkey_create($name, $key)
+  {
+    $args = array(
+      'name' => $name,
+      'key'  => $key
+    );
+    return self::post('sshkey/create', $args);
+  }
+
+  /**
+   * SSH Keys Create method
+   * @see https://www.vultr.com/api/#sshkey_sshkey_update
+   * @param string $key_id
+   * @param string $name
+   * @param string $key [openssh formatted public key]
+   * @return mixed response code and object in associative arrays
+   */
+
+  public function sshkey_update($key_id, $name, $key)
+  {
+    $args = array(
+      'SSHKEYID' => $key_id,
+      'name'     => $name,
+      'ssh_key'  => $key
+    );
+    return self::code('sshkey/update', $args);
+  }
+
+  /**
+   * SSH Keys Destroy method
+   * @see https://www.vultr.com/api/#sshkey_sshkey_destroy
+   * @param string $key_id
+   * @return mixed response code and object in associative arrays
+   */
+
+  public function sshkey_destroy($key_id)
+  {
+    $args = array('SSHKEYID' => $key_id);
+    return self::code('sshkey/update', $args);
+  }
+
   /**
    * GET Method
    * @param string $method
@@ -508,7 +598,21 @@ class Vultr
   public function get($method, $args = FALSE)
   {
     $this->request_type = 'GET';
-    return $this->query($method, $args);
+    return self::query($method, $args);
+  }
+
+   /**
+    * CODE Method
+    * @param string $method
+    * @param mixed $args
+    * @return mixed if no exceptions thrown
+    **/
+
+  public function code($method, $args = FALSE)
+  {
+    $this->request_type = 'POST';
+    $this->get_code = true;
+    return self::query($method, $args);
   }
 
   /**
@@ -520,7 +624,7 @@ class Vultr
   public function post($method, $args)
   {
     $this->request_type = 'POST';
-    return $this->query($method, $args);
+    return self::query($method, $args);
   }
 
   /**
@@ -601,6 +705,12 @@ class Vultr
 
     curl_close($apisess);
     $obj = json_decode($response, true);
+
+    if ($this->response_code != 0)
+    {
+      return array('code' => $this->response_code);
+    }
+
     return $obj;
   }
 
@@ -617,7 +727,14 @@ class Vultr
 
   public function isAPIError($response_obj, $response)
   {
+
     $code = curl_getinfo($response_obj, CURLINFO_HTTP_CODE);
+
+    if ($this->get_code)
+    {
+      $this->response_code = $code;
+      break;
+    }
 
     if ($this->debug) echo $code . PHP_EOL;
 
@@ -631,6 +748,7 @@ class Vultr
       case 412: throw new Exception('Request failed: ' . $response); break;
       default:  break;
     }
+
   }
 
 }
