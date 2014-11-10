@@ -552,7 +552,7 @@ class Vultr
   {
     $args = array(
       'name' => $name,
-      'key'  => $key
+      'ssh_key'  => $key
     );
     return self::post('sshkey/create', $args);
   }
