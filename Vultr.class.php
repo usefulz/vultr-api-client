@@ -239,6 +239,7 @@ class Vultr
    * Determine region availability
    * @see https://www.vultr.com/api/#regions_region_available
    * @param int $datacenter_id
+   * @return mixed VPS plans available at given region
    */
 
   public function regions_availability($datacenter_id)
@@ -309,17 +310,18 @@ class Vultr
 
   /**
    * Determine server availability
-   * @param mixed Server configuration
+   * @param int $region_id Datacenter ID
+   * @param int $plan_id VPS Plan ID
    * @return bool Server availability
    * @throws Exception if VPS Plan ID is not available in specified region
    */
 
-  public function server_available($config)
+  public function server_available($region_id, $plan_id)
   {
-    $availability = self::regions_availability((int) $config['DCID']);
-    if (in_array((int) $config['VPSPLANID'], $availability))
+    $availability = self::regions_availability((int) $region_id);
+    if (!in_array((int) $plan_id, $availability))
     {
-      throw new Exception('Plan ID ' . $config['VPSPLANID'] . ' is not available in region ' . $config['DCID']);
+      throw new Exception('Plan ID ' . $plan_id . ' is not available in region ' . $region_id);
       return FALSE;
     } else {
       return TRUE;
@@ -602,24 +604,32 @@ class Vultr
   /**
    * Create Server
    * @see https://www.vultr.com/api/#server_create
-   * @param string $hostname
-   * @param mixed $config
-   * @return FALSE if plan is available in specified region
+   * @param int $region_id
+   * @param int $plan_id
+   * @param int $os_id
+   * @return FALSE if plan is not available in specified region
    * @return int Server ID if creation is successful
    */
 
-  public function create($hostname, $config)
+  public function create($config)
   {
+
+    $region_id = (int) $config['DCID'];
+    $plan_id   = (int) $config['VPSPLANID'];
+    $os_id     = (int) $config['OSID'];
+
     try
     {
-      $available = self::server_available($config);
+      $available = self::server_available($region_id, $plan_id);
     }
     catch (Exception $e)
     {
       return FALSE;
     }
+
     $create = self::post('server/create', $config);
     return (int) $create['SUBID'];
+
   }
 
 
