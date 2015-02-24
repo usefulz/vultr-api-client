@@ -706,6 +706,7 @@ class Vultr
   public function get($method, $args = FALSE)
   {
     $this->request_type = 'GET';
+    $this->get_code = false;
     return self::query($method, $args);
   }
 
