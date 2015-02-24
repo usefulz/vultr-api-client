@@ -3,7 +3,7 @@
 /**
  * Vultr.com API Client
  * @package vultr
- * @version 0.0.1
+ * @version 1.0
  * @author  https://github.com/usefulz
  * @license http://www.opensource.org/licenses/mit-license.php MIT
  * @see     https://github.com/usefulz/vultr-api-client
