@@ -35,7 +35,7 @@ class Vultr
    * @type string Current version number
    */
 
-  public $version = '0.0.1';
+  public $version = '1.0';
 
   /**
    * User Agent
@@ -51,7 +51,7 @@ class Vultr
    * @type bool Debug API requests
    */
 
-  public $debug = TRUE;
+  public $debug = FALSE;
 
   /**
    * Snapshots Variable
