@@ -172,7 +172,7 @@ class Vultr
 
   public function os_list()
   {
-    return self::get_json($this->endpoint . 'os/list');
+    return self::get('os/list');
   }
 
   /**
@@ -230,7 +230,7 @@ class Vultr
 
   public function plans_list()
   {
-    return self::get_json($this->endpoint . 'plans/list');
+    return self::get($this->endpoint . 'plans/list');
   }
 
   /**
@@ -241,7 +241,7 @@ class Vultr
 
   public function regions_list()
   {
-    return self::get_json($this->endpoint . 'regions/list');
+    return self::get($this->endpoint . 'regions/list');
   }
 
   /**
@@ -717,11 +717,6 @@ class Vultr
     $this->request_type = 'GET';
     $this->get_code = false;
     return self::query($method, $args);
-  }
-
-  public function get_json($url)
-  {
-    return json_decode(file_get_contents($url), TRUE);
   }
 
    /**
