@@ -94,6 +94,14 @@ class Vultr
   public $servers   = array();
 
   /**
+   * Account Variable
+   * @access public
+   * @type mixed Array to store account data
+   */
+
+  public $account   = array();
+
+  /**
    * OS List Variable
    * @access public
    * @type mixed Array to store OS list
@@ -135,6 +143,7 @@ class Vultr
   public function __construct($token)
   {
     $this->api_token = $token;
+    $this->account   = self::account_info();
     $this->snapshots = self::snapshot_list();
     $this->scripts   = self::startupscript_list();
     $this->regions   = self::regions_list();
@@ -163,7 +172,7 @@ class Vultr
 
   public function os_list()
   {
-    return self::get('os/list');
+    return self::get_json($this->endpoint . 'os/list');
   }
 
   /**
@@ -221,7 +230,7 @@ class Vultr
 
   public function plans_list()
   {
-    return self::get('plans/list');
+    return self::get_json($this->endpoint . 'plans/list');
   }
 
   /**
@@ -232,7 +241,7 @@ class Vultr
 
   public function regions_list()
   {
-    return self::get('regions/list');
+    return self::get_json($this->endpoint . 'regions/list');
   }
 
   /**
@@ -710,6 +719,11 @@ class Vultr
     return self::query($method, $args);
   }
 
+  public function get_json($url)
+  {
+    return json_decode(file_get_contents($url), TRUE);
+  }
+
    /**
     * CODE Method
     * @param string $method
@@ -745,6 +759,9 @@ class Vultr
   private function query($method, $args)
   {
 
+    // To avoid rate limit hits
+    sleep(1);
+
     $url = $this->endpoint . $method . '?api_key=' . $this->api_token;
 
     if ($this->debug) echo $this->request_type . ' ' . $url . PHP_EOL;
@@ -753,8 +770,8 @@ class Vultr
       CURLOPT_USERAGENT => sprintf('%s v%s (%s)', $this->agent, $this->version, 'https://github.com/usefulz/vultr-api-client'),
       CURLOPT_HEADER => 0,
       CURLOPT_VERBOSE => 0,
-      CURLOPT_SSL_VERIFYPEER => 1,
-      CURLOPT_SSL_VERIFYHOST => 1,
+      CURLOPT_SSL_VERIFYPEER => 0,
+      CURLOPT_SSL_VERIFYHOST => 0,
       CURLOPT_HTTP_VERSION => '1.0',
       CURLOPT_FOLLOWLOCATION => 0,
       CURLOPT_FRESH_CONNECT => 1,
