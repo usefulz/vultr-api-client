@@ -823,11 +823,13 @@ class Vultr
     }
 
     // To avoid rate limit hits
-    sleep(1);
+    if ($this->readLast() == time())
+	    sleep(1);
 
     $apisess = curl_init();
     curl_setopt_array($apisess, $_defaults);
     $response = curl_exec($apisess);
+    $this->writeLast();
 
     /**
      * Check to see if there were any API exceptions thrown
@@ -953,6 +955,20 @@ class Vultr
     $files = glob("$this->cache_dir/$group-*");
     foreach($files as $file)
       unlink($file);
+  }
+  
+  protected function writeLast()
+  {
+    if (!file_exists($this->cache_dir))
+      mkdir($this->cache_dir);
+
+    file_put_contents("$this->cache_dir/last", time());
+  }
+
+  protected function readLast()
+  {
+    if (file_exists("$this->cache_dir/last"))
+      return file_get_contents("$this->cache_dir/last");
   }
 }
 ?>
