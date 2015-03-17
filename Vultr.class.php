@@ -133,14 +133,31 @@ class Vultr
 
   public $get_code = false;
 
+
+  /**
+   * Cache ttl for all get requests
+   * @access public
+   * $type int TTL in seconds
+   */
+  public $cache_ttl = 3600;
+
+
+  /**
+   * Cache folder
+   * @access public
+   * $type string Cache dir
+   */
+  public $cache_dir = '/tmp/vultr-api-client-cache';
+
   /**
    * Constructor function
    * @param string $token
+   * @param int $cache_ttl
    * @see https://my.vultr.com/settings/
    * @return void
    */
 
-  public function __construct($token)
+  public function __construct($token, $cache_ttl = 3600)
   {
     $this->api_token = $token;
     $this->account   = self::account_info();
@@ -230,7 +247,7 @@ class Vultr
 
   public function plans_list()
   {
-    return self::get($this->endpoint . 'plans/list');
+    return self::get('plans/list');
   }
 
   /**
@@ -241,7 +258,7 @@ class Vultr
 
   public function regions_list()
   {
-    return self::get($this->endpoint . 'regions/list');
+    return self::get('regions/list');
   }
 
   /**
@@ -754,9 +771,6 @@ class Vultr
   private function query($method, $args)
   {
 
-    // To avoid rate limit hits
-    sleep(1);
-
     $url = $this->endpoint . $method . '?api_key=' . $this->api_token;
 
     if ($this->debug) echo $this->request_type . ' ' . $url . PHP_EOL;
@@ -776,6 +790,7 @@ class Vultr
       CURLOPT_HTTPHEADER => array('Accept: application/json')
     );
 
+    $cacheable = false;
     switch($this->request_type)
     {
 
@@ -794,14 +809,27 @@ class Vultr
         } else {
           $_defaults[CURLOPT_URL] = $url;
         }
+
+        $cacheable = true;
+        $response = $this->serveFromCache($_defaults[CURLOPT_URL]);
+	if ($response !== false)
+        {
+          //echo "FROM CACHE: $url\n";
+          return $response;
+        }
       break;
 
       default:break;
     }
 
+    // To avoid rate limit hits
+    if ($this->readLast() == time())
+	    sleep(1);
+
     $apisess = curl_init();
     curl_setopt_array($apisess, $_defaults);
     $response = curl_exec($apisess);
+    $this->writeLast();
 
     /**
      * Check to see if there were any API exceptions thrown
@@ -832,6 +860,11 @@ class Vultr
       return (int) $this->response_code;
     }
 
+    if ($cacheable)
+      $this->saveToCache($url, $response);
+    else
+      $this->purgeCache($url);
+
     return $obj;
   }
 
@@ -854,7 +887,7 @@ class Vultr
     if ($this->get_code)
     {
       $this->response_code = $code;
-      break;
+      return;
     }
 
     if ($this->debug) echo $code . PHP_EOL;
@@ -872,5 +905,70 @@ class Vultr
 
   }
 
+  protected function serveFromCache($url)
+  {
+    // garbage collect 5% of the time
+    if (mt_rand(0, 19) == 0)
+    {
+      $files = glob("$this->cache_dir/*");
+      $old = time() - ($this->cache_ttl * 2);
+      foreach($files as $file)
+      {
+        if (filemtime($file) < $old)
+          unlink($old);
+      }
+    }
+
+    $hash = md5($url);
+    $group = $this->groupFromUrl($url);
+    $file = "$this->cache_dir/$group-$hash";
+    if (file_exists($file) && filemtime($file) > (time() - $this->cache_ttl))
+    {
+      $response = file_get_contents($file); 
+      $obj = json_decode($response, true);
+      return $obj;
+    }
+    return false;
+  }
+
+  protected function saveToCache($url, $json)
+  {
+    if (!file_exists($this->cache_dir))
+      mkdir($this->cache_dir);
+
+    $hash = md5($url);
+    $group = $this->groupFromUrl($url);
+    $file = "$this->cache_dir/$group-$hash";
+    file_put_contents($file, $json);
+  }
+
+  protected function groupFromUrl($url)
+  {
+    $group = 'default';
+    if (preg_match('@/v1/([^/]+)/@', $url, $match))
+      return $match[1];
+  }
+
+  protected function purgeCache($url)
+  {
+    $group = $this->groupFromUrl($url);
+    $files = glob("$this->cache_dir/$group-*");
+    foreach($files as $file)
+      unlink($file);
+  }
+  
+  protected function writeLast()
+  {
+    if (!file_exists($this->cache_dir))
+      mkdir($this->cache_dir);
+
+    file_put_contents("$this->cache_dir/last", time());
+  }
+
+  protected function readLast()
+  {
+    if (file_exists("$this->cache_dir/last"))
+      return file_get_contents("$this->cache_dir/last");
+  }
 }
 ?>
