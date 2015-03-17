@@ -887,7 +887,7 @@ class Vultr
     if ($this->get_code)
     {
       $this->response_code = $code;
-      break;
+      return;
     }
 
     if ($this->debug) echo $code . PHP_EOL;
