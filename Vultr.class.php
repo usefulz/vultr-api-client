@@ -157,7 +157,7 @@ class Vultr
    * @return void
    */
 
-  public function __construct($token, $cache_ttl = 600)
+  public function __construct($token, $cache_ttl = 3600)
   {
     $this->api_token = $token;
     $this->account   = self::account_info();
