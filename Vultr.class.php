@@ -139,7 +139,7 @@ class Vultr
    * @access public
    * $type int TTL in seconds
    */
-  public $cache_ttl = 600;
+  public $cache_ttl = 3600;
 
 
   /**
@@ -147,7 +147,7 @@ class Vultr
    * @access public
    * $type string Cache dir
    */
-  public $cache_dir = '/tmp/vult-api-client';
+  public $cache_dir = '/tmp/vultr-api-client-cache';
 
   /**
    * Constructor function
@@ -814,7 +814,7 @@ class Vultr
         $response = $this->serveFromCache($_defaults[CURLOPT_URL]);
 	if ($response !== false)
         {
-          echo "FROM CACHE: $url\n";
+          //echo "FROM CACHE: $url\n";
           return $response;
         }
       break;
@@ -860,6 +860,8 @@ class Vultr
 
     if ($cacheable)
       $this->saveToCache($url, $response);
+    else
+      $this->purgeCache($url);
 
     return $obj;
   }
@@ -916,7 +918,8 @@ class Vultr
     }
 
     $hash = md5($url);
-    $file = "$this->cache_dir/$hash";
+    $group = $this->groupFromUrl($url);
+    $file = "$this->cache_dir/$group-$hash";
     if (file_exists($file) && filemtime($file) > (time() - $this->cache_ttl))
     {
       $response = file_get_contents($file); 
@@ -932,8 +935,24 @@ class Vultr
       mkdir($this->cache_dir);
 
     $hash = md5($url);
-    $file = "$this->cache_dir/$hash";
+    $group = $this->groupFromUrl($url);
+    $file = "$this->cache_dir/$group-$hash";
     file_put_contents($file, $json);
+  }
+
+  protected function groupFromUrl($url)
+  {
+    $group = 'default';
+    if (preg_match('@/v1/([^/]+)/@', $url, $match))
+      return $match[1];
+  }
+
+  protected function purgeCache($url)
+  {
+    $group = $this->groupFromUrl($url);
+    $files = glob("$this->cache_dir/$group-*");
+    foreach($files as $file)
+      unlink($file);
   }
 }
 ?>
