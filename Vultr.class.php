@@ -102,6 +102,14 @@ class Vultr
   public $account   = array();
 
   /**
+   * Auth Variable
+   * @access public
+   * @type mixed Array to store auth data
+   */
+   
+   public $auth      = array();
+
+  /**
    * OS List Variable
    * @access public
    * @type mixed Array to store OS list
@@ -160,6 +168,7 @@ class Vultr
   public function __construct($token, $cache_ttl = 3600)
   {
     $this->api_token = $token;
+    $this->auth      = self::auth_info();
     $this->account   = self::account_info();
     $this->snapshots = self::snapshot_list();
     $this->scripts   = self::startupscript_list();
@@ -180,6 +189,18 @@ class Vultr
   {
     return self::get('account/info');
   }
+
+  /**
+   * Get Auth info
+   * @see https://www.vultr.com/api/#auth_info
+   * @return mixed
+   */
+
+  public function auth_info()
+  {
+    return self::get('auth/info');
+  }
+
 
   /**
    * Get OS list
