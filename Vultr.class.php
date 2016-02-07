@@ -900,6 +900,7 @@ class Vultr
       case 405: throw new Exception('Invalid HTTP method. Check that the method (POST|GET) matches what the documentation indicates'); break;
       case 500: throw new Exception('Internal server error. Try again at a later time'); break;
       case 412: throw new Exception('Request failed: ' . $response); break;
+      case 503: throw new Exception('Rate limit hit. API requests are limited to an average of 2/s. Try your request again later.'); break;
       default:  break;
     }
 
