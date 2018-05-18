@@ -800,13 +800,9 @@ class Vultr
       CURLOPT_USERAGENT => sprintf('%s v%s (%s)', $this->agent, $this->version, 'https://github.com/usefulz/vultr-api-client'),
       CURLOPT_HEADER => 0,
       CURLOPT_VERBOSE => 0,
-      CURLOPT_SSL_VERIFYPEER => 0,
-      CURLOPT_SSL_VERIFYHOST => 0,
-      CURLOPT_HTTP_VERSION => '1.0',
       CURLOPT_FOLLOWLOCATION => 0,
-      CURLOPT_FRESH_CONNECT => 1,
       CURLOPT_RETURNTRANSFER => 1,
-      CURLOPT_FORBID_REUSE => 1,
+      CURLOPT_SSLVERSION => CURL_SSLVERSION_TLSv1,
       CURLOPT_TIMEOUT => 30,
       CURLOPT_HTTPHEADER => array('Accept: application/json')
     );
